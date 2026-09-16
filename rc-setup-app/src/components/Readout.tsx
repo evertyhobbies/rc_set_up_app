@@ -6,14 +6,14 @@ export function Readout({
   highlight,
   stacked = false,
   label,
+  size = "lg",
 }: {
   field: RenderField;
   corner?: "FL" | "FR" | "RL" | "RR";
   highlight?: boolean;
-  /** Label above, big bold centered value below — the digital-scale look. */
   stacked?: boolean;
-  /** Override the displayed label (defaults to field.label). */
   label?: string;
+  size?: "lg" | "sm";
 }) {
   const raw = corner ? field.values[corner] : field.values.value;
   const display =
@@ -26,12 +26,14 @@ export function Readout({
   const displayLabel = label ?? field.label;
 
   if (stacked) {
+    const valueTextClass = size === "sm" ? "text-base" : "text-2xl";
+    const labelTextClass = size === "sm" ? "text-[11px]" : "text-[13px]";
     return (
       <div className="flex flex-col items-center gap-0.5">
-        <span className="text-[13px] font-medium text-accent">{displayLabel}</span>
+        <span className={`${labelTextClass} font-medium text-accent`}>{displayLabel}</span>
         <span className="flex items-baseline gap-1">
-          <span className="font-mono text-2xl text-ink-primary">{display}</span>
-          {field.unit && <span className="text-sm text-ink-muted">{field.unit}</span>}
+          <span className={`font-mono ${valueTextClass} text-ink-primary`}>{display}</span>
+          {field.unit && <span className="text-xs text-ink-muted">{field.unit}</span>}
         </span>
       </div>
     );
