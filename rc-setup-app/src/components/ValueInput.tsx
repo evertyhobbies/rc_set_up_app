@@ -67,7 +67,7 @@ export function ValueInput({
               onChange={(e) => setValue(e.target.value)}
               onBlur={(e) => commit(e.target.value)}
               className={stackedInputClass}
-              style={{ opacity: isPending ? 0.6 : 1, width: `${Math.max(value.length, 1) + 1}ch` }}
+              style={{ opacity: isPending ? 0.6 : 1, width: `${Math.max(value.length, 2) + 1.5}ch` }}
             />
             {field.unit && <span className="text-xs text-ink-muted">{field.unit}</span>}
           </span>
