@@ -10,15 +10,15 @@ export const dynamic = "force-dynamic";
 export default async function SetupPage({
   params,
 }: {
-  params: { carId: string; setupId: string };
+  params: Promise<{ carId: string; setupId: string }>;
 }) {
-  const data = await getSetupData(params.setupId);
+  const { carId, setupId } = await params;
+  const data = await getSetupData(setupId);
   if (!data) notFound();
 
   const { car, model, setup, sections } = data;
   const section = (key: string) => sections.find((s) => s.key === key);
-  const path = `/cars/${params.carId}/setups/${params.setupId}`;
-  const setupId = params.setupId;
+  const path = `/cars/${carId}/setups/${setupId}`;
 
   const corners = section("corners")?.fields ?? [];
   const transmission = section("transmission")?.fields ?? [];
@@ -29,7 +29,6 @@ export default async function SetupPage({
   const cornerWeightComputed =
     section("corner_weight")?.fields.filter((f) => f.type === "computed") ?? [];
   const raceWeight = section("race_weight")?.fields ?? [];
-
   return (
     <main className="min-h-screen bg-surface-0 px-4 py-6">
       <div className="mb-5">
