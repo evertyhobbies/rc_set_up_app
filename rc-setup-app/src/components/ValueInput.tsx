@@ -37,7 +37,8 @@ export function ValueInput({
   if (stacked) {
     const valueTextClass = size === "sm" ? "text-base" : "text-2xl";
     const labelTextClass = size === "sm" ? "text-[11px]" : "text-[13px]";
-    const stackedInputClass = `bg-transparent text-center font-mono ${valueTextClass} text-ink-primary outline-none border-b border-transparent focus:border-accent/50 placeholder:text-ink-muted`;
+    const blockPad = size === "sm" ? "px-1.5 py-0.5" : "px-2.5 py-1";
+    const stackedInputClass = `bg-ink-primary text-surface-0 text-center font-mono ${valueTextClass} rounded-md ${blockPad} outline-none focus:ring-2 focus:ring-accent placeholder:text-surface-0/40`;
 
     return (
       <div className="flex flex-col items-center gap-0.5">
@@ -46,13 +47,11 @@ export function ValueInput({
           <select
             value={value}
             onChange={(e) => commit(e.target.value)}
-            className={`bg-transparent font-mono ${valueTextClass} text-ink-primary outline-none text-center`}
+            className={`bg-ink-primary text-surface-0 font-mono ${valueTextClass} rounded-md ${blockPad} outline-none focus:ring-2 focus:ring-accent text-center`}
           >
-            <option value="" className="bg-surface-1">
-              —
-            </option>
+            <option value="">—</option>
             {(field.options ?? []).map((opt) => (
-              <option key={opt} value={opt} className="bg-surface-1">
+              <option key={opt} value={opt}>
                 {opt}
               </option>
             ))}
@@ -67,7 +66,7 @@ export function ValueInput({
               onChange={(e) => setValue(e.target.value)}
               onBlur={(e) => commit(e.target.value)}
               className={stackedInputClass}
-              style={{ opacity: isPending ? 0.6 : 1, width: `${Math.max(value.length, 2) + 1.5}ch` }}
+              style={{ opacity: isPending ? 0.6 : 1, width: `${Math.max(value.length, 2) + 3}ch` }}
             />
             {field.unit && <span className="text-xs text-ink-muted">{field.unit}</span>}
           </span>
@@ -77,7 +76,7 @@ export function ValueInput({
   }
 
   const inputClass =
-    "w-20 bg-transparent text-right font-mono text-[15px] text-accent outline-none border-b border-transparent focus:border-accent/50 placeholder:text-ink-muted";
+    "w-20 bg-ink-primary text-surface-0 text-right font-mono text-[15px] rounded px-1.5 py-0.5 outline-none focus:ring-2 focus:ring-accent placeholder:text-surface-0/40";
 
   return (
     <div className="flex items-baseline justify-between py-1.5">
@@ -87,13 +86,11 @@ export function ValueInput({
           <select
             value={value}
             onChange={(e) => commit(e.target.value)}
-            className="bg-transparent font-mono text-[15px] text-accent outline-none"
+            className="bg-ink-primary text-surface-0 font-mono text-[15px] rounded px-1.5 py-0.5 outline-none focus:ring-2 focus:ring-accent"
           >
-            <option value="" className="bg-surface-1">
-              —
-            </option>
+            <option value="">—</option>
             {(field.options ?? []).map((opt) => (
-              <option key={opt} value={opt} className="bg-surface-1">
+              <option key={opt} value={opt}>
                 {opt}
               </option>
             ))}
