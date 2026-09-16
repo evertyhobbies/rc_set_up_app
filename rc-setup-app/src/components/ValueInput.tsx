@@ -9,11 +9,17 @@ export function ValueInput({
   setupId,
   corner,
   path,
+  stacked = false,
+  label,
 }: {
   field: RenderField;
   setupId: string;
   corner?: "FL" | "FR" | "RL" | "RR";
   path: string;
+  /** Label above, big bold centered value below — the digital-scale look. */
+  stacked?: boolean;
+  /** Override the displayed label (defaults to field.label). */
+  label?: string;
 }) {
   const raw = corner ? field.values[corner] : field.values.value;
   const [value, setValue] = useState(raw === null || raw === undefined ? "" : String(raw));
@@ -26,12 +32,37 @@ export function ValueInput({
     });
   }
 
+  const displayLabel = label ?? field.label;
+
+  if (stacked) {
+    const stackedInputClass =
+      "w-full bg-transparent text-center font-mono text-2xl text-ink-primary outline-none border-b border-transparent focus:border-accent/50 placeholder:text-ink-muted";
+    return (
+      <div className="flex flex-col items-center gap-0.5">
+        <span className="text-[13px] font-medium text-accent">{displayLabel}</span>
+        <span className="flex items-baseline gap-1">
+          <input
+            type={field.type === "number" ? "number" : "text"}
+            inputMode={field.type === "number" ? "decimal" : "text"}
+            value={value}
+            placeholder="—"
+            onChange={(e) => setValue(e.target.value)}
+            onBlur={(e) => commit(e.target.value)}
+            className={stackedInputClass}
+            style={{ opacity: isPending ? 0.6 : 1, width: `${Math.max(value.length, 1) + 1}ch` }}
+          />
+          {field.unit && <span className="text-sm text-ink-muted">{field.unit}</span>}
+        </span>
+      </div>
+    );
+  }
+
   const inputClass =
     "w-20 bg-transparent text-right font-mono text-[15px] text-accent outline-none border-b border-transparent focus:border-accent/50 placeholder:text-ink-muted";
 
   return (
     <div className="flex items-baseline justify-between py-1.5">
-      <label className="text-[13px] text-ink-secondary">{field.label}</label>
+      <label className="text-[13px] text-ink-secondary">{displayLabel}</label>
       <span className="flex items-baseline gap-1">
         {field.type === "select" ? (
           <select
