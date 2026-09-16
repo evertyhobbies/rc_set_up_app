@@ -2,6 +2,7 @@ import { getSetupData } from "@/lib/getSetupData";
 import { CornerCard } from "@/components/CornerCard";
 import { Readout } from "@/components/Readout";
 import { ValueInput } from "@/components/ValueInput";
+import { CornerWeightDiagram } from "@/components/CornerWeightDiagram";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +30,7 @@ export default async function SetupPage({
   const cornerWeightComputed =
     section("corner_weight")?.fields.filter((f) => f.type === "computed") ?? [];
   const raceWeight = section("race_weight")?.fields ?? [];
+
   return (
     <main className="min-h-screen bg-surface-0 px-4 py-6">
       <div className="mb-5">
@@ -75,22 +77,13 @@ export default async function SetupPage({
       </div>
 
       {/* Corner weight */}
-      <div className="mt-2 rounded-md border border-line bg-surface-1 px-3 py-2.5">
-        <div className="text-[13px] font-medium text-ink-primary">Corner weight</div>
-        <div className="mt-1 grid grid-cols-2 gap-x-6">
-          {(["FL", "FR", "RL", "RR"] as const).map((corner) => {
-            const field = cornerWeightGrams[0];
-            if (!field) return null;
-            return (
-              <ValueInput key={corner} field={field} corner={corner} setupId={setupId} path={path} />
-            );
-          })}
-        </div>
-        <div className="mt-1 border-t border-line/60 pt-1">
-          {cornerWeightComputed.map((f) => (
-            <Readout key={f.id} field={f} highlight />
-          ))}
-        </div>
+      <div className="mt-2">
+        <CornerWeightDiagram
+          gramsField={cornerWeightGrams[0]}
+          computed={cornerWeightComputed}
+          setupId={setupId}
+          path={path}
+        />
       </div>
 
       {/* Race weight */}
