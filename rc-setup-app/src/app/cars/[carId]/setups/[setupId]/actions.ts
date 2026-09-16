@@ -3,7 +3,7 @@
 import { and, eq, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
-import { setupValues } from "@/db/schema";
+import { setupValues, cars } from "@/db/schema";
 
 export async function saveValue(
   setupId: string,
@@ -28,5 +28,10 @@ export async function saveValue(
     await db.insert(setupValues).values({ setupId, fieldId, corner: corner ?? undefined, value });
   }
 
+  revalidatePath(path);
+}
+
+export async function updateCarBodyStyle(carId: string, bodyStyle: string, path: string) {
+  await db.update(cars).set({ bodyStyle }).where(eq(cars.id, carId));
   revalidatePath(path);
 }
