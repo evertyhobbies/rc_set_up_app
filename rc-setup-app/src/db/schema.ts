@@ -95,6 +95,9 @@ export const cars = pgTable("cars", {
     .notNull()
     .references(() => setupTemplates.id),
   nickname: text("nickname").notNull(), // "Blue X4"
+  // Which top-down icon to show on the setup page. One of:
+  // "sports" | "porsche" | "f1" | "nascar" | "buggy" | "truck"
+  bodyStyle: text("body_style").notNull().default("sports"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
