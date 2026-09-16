@@ -29,7 +29,7 @@ function CornerStack({
   path: string;
 }) {
   return (
-    <div className="flex flex-col items-center gap-3">
+    <div className="grid grid-cols-2 gap-x-4 gap-y-3 rounded-md border border-line px-3 py-3">
       {cornerFields.map((f) => (
         <ValueInput key={f.id} field={f} corner={corner} setupId={setupId} path={path} stacked size="sm" />
       ))}
