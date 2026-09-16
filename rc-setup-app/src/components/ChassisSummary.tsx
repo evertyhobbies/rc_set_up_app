@@ -62,6 +62,19 @@ function FieldCluster({
   );
 }
 
+function CrossStat({ label, grams, pct }: { label: string; grams: number | null; pct: number | null }) {
+  return (
+    <div className="flex flex-col items-center gap-0.5">
+      <span className="text-[11px] font-medium text-accent">{label}</span>
+      <span className="flex items-baseline gap-1">
+        <span className="font-mono text-base text-ink-primary">{grams !== null ? grams.toFixed(1) : "—"}</span>
+        <span className="text-xs text-ink-muted">g</span>
+      </span>
+      {pct !== null && <span className="font-mono text-xs text-ink-secondary">{pct.toFixed(0)}%</span>}
+    </div>
+  );
+}
+
 export function ChassisSummary({
   corners,
   frontAxle,
@@ -90,6 +103,10 @@ export function ChassisSummary({
   const leftPct = byKey("left_weight_pct");
   const rightPct = byKey("right_weight_pct");
   const crossPct = byKey("cross_weight_pct");
+  const crossPctValue =
+    crossPct && crossPct.values.value !== null && crossPct.values.value !== undefined
+      ? Number(crossPct.values.value)
+      : null;
 
   const g = (corner: "FL" | "FR" | "RL" | "RR") => {
     const v = cornerWeightGrams?.values[corner];
@@ -112,7 +129,7 @@ export function ChassisSummary({
         style={{
           gridTemplateColumns: "1fr 110px 1fr",
           gridTemplateAreas:
-            '"frontpct frontpct frontpct" "front front front" "lf car rf" "lw car rw" "lr car rr" "rear rear rear" "rearpct rearpct rearpct" "total total total" "rfcross crosslabel lfcross" "race race race"',
+            '"frontpct frontpct frontpct" "front front front" "lf car rf" "lw car rw" "lr car rr" "rear rear rear" "rearpct rearpct rearpct" "total total total"',
         }}
       >
         <div style={{ gridArea: "frontpct" }}>
@@ -133,11 +150,13 @@ export function ChassisSummary({
           <CornerStack corner="FR" cornerFields={corners} gramsField={cornerWeightGrams} setupId={setupId} path={path} />
         </div>
 
-        <div style={{ gridArea: "lw" }} className="self-center justify-self-end">
+        <div style={{ gridArea: "lw" }} className="flex flex-col items-center justify-self-end gap-3">
           {leftPct && <Readout field={leftPct} stacked label="Left weight" />}
+          <CrossStat label="RF + LR" grams={rfLr} pct={crossPctValue} />
         </div>
-        <div style={{ gridArea: "rw" }} className="self-center justify-self-start">
+        <div style={{ gridArea: "rw" }} className="flex flex-col items-center justify-self-start gap-3">
           {rightPct && <Readout field={rightPct} stacked label="Right weight" />}
+          <CrossStat label="LF + RR" grams={lfRr} pct={crossPctValue !== null ? 100 - crossPctValue : null} />
         </div>
 
         <div style={{ gridArea: "lr" }} className="self-end justify-self-end">
@@ -155,38 +174,11 @@ export function ChassisSummary({
           {rearPct && <Readout field={rearPct} stacked label="Rear weight" />}
         </div>
 
-        <div style={{ gridArea: "total" }}>
+        <div style={{ gridArea: "total" }} className="flex items-start justify-center gap-10 border-t border-line/60 pt-4">
           {total && <Readout field={total} stacked label="Total weight (scale)" />}
-        </div>
-
-        <div style={{ gridArea: "rfcross" }} className="flex flex-col items-center gap-0.5">
-          <span className="text-[13px] font-medium text-accent">RF + LR</span>
-          <span className="flex items-baseline gap-1">
-            <span className="font-mono text-2xl text-ink-primary">{rfLr !== null ? rfLr.toFixed(1) : "—"}</span>
-            <span className="text-sm text-ink-muted">g</span>
-          </span>
-          {crossPct && (
-            <span className="font-mono text-sm text-ink-secondary">{Number(crossPct.values.value).toFixed(0)}%</span>
-          )}
-        </div>
-        <div style={{ gridArea: "crosslabel" }} className="flex items-center justify-center text-[13px] font-medium text-ink-secondary">
-          Cross weight
-        </div>
-        <div style={{ gridArea: "lfcross" }} className="flex flex-col items-center gap-0.5">
-          <span className="text-[13px] font-medium text-accent">LF + RR</span>
-          <span className="flex items-baseline gap-1">
-            <span className="font-mono text-2xl text-ink-primary">{lfRr !== null ? lfRr.toFixed(1) : "—"}</span>
-            <span className="text-sm text-ink-muted">g</span>
-          </span>
-          {crossPct && (
-            <span className="font-mono text-sm text-ink-secondary">
-              {(100 - Number(crossPct.values.value)).toFixed(0)}%
-            </span>
-          )}
-        </div>
-
-        <div style={{ gridArea: "race" }} className="border-t border-line/60 pt-4">
-          <FieldCluster fields={raceWeight} setupId={setupId} path={path} />
+          {raceWeight.map((f) => (
+            <ValueInput key={f.id} field={f} setupId={setupId} path={path} stacked label="Total weight" />
+          ))}
         </div>
       </div>
     </div>
