@@ -4,13 +4,41 @@ import { Readout } from "./Readout";
 
 function CarBody() {
   return (
-    <svg viewBox="0 0 120 425" className="h-auto w-full" aria-hidden="true">
+    <svg viewBox="0 0 140 425" className="h-auto w-full" aria-hidden="true">
+      {/* Front wing */}
+      <rect x="18" y="0" width="104" height="11" rx="5" className="fill-surface-2 stroke-line" strokeWidth="1" />
+      <line x1="52" y1="11" x2="52" y2="22" className="stroke-line" strokeWidth="1.5" />
+      <line x1="88" y1="11" x2="88" y2="22" className="stroke-line" strokeWidth="1.5" />
+
+      {/* Chassis tub */}
       <path
-        d="M40,7 Q60,-3 80,7 L92,31 Q100,48 98,75 L98,347 Q100,374 92,391 L80,415 Q60,424 40,415 L28,391 Q20,374 22,347 L22,75 Q20,48 28,31 Z"
+        d="M50,20 Q70,8 90,20 L102,42 Q110,58 108,82 L108,343 Q110,368 102,384 L90,406 Q70,418 50,406 L38,384 Q30,368 32,343 L32,82 Q30,58 38,42 Z"
         className="fill-surface-2 stroke-line"
         strokeWidth="1.5"
       />
-      <rect x="38" y="88" width="44" height="245" rx="12" className="fill-surface-1" opacity="0.7" />
+
+      {/* Front shock tower */}
+      <path d="M56,26 L84,26 L78,42 L62,42 Z" className="fill-surface-1 stroke-line" strokeWidth="1" opacity="0.9" />
+      {/* Rear shock tower */}
+      <path d="M58,388 L82,388 L76,402 L64,402 Z" className="fill-surface-1 stroke-line" strokeWidth="1" opacity="0.9" />
+
+      {/* Battery / ESC / receiver stack down the centerline */}
+      <rect x="50" y="120" width="40" height="58" rx="4" className="fill-accent/15 stroke-accent/40" strokeWidth="1" />
+      <rect x="52" y="186" width="36" height="86" rx="4" className="fill-surface-1 stroke-line" strokeWidth="1" />
+      <rect x="54" y="280" width="32" height="34" rx="4" className="fill-surface-1 stroke-line" strokeWidth="1" opacity="0.9" />
+
+      {/* Front wheels */}
+      <rect x="0" y="48" width="26" height="68" rx="9" className="fill-ink-muted" opacity="0.55" />
+      <rect x="114" y="48" width="26" height="68" rx="9" className="fill-ink-muted" opacity="0.55" />
+      {/* Rear wheels */}
+      <rect x="0" y="308" width="26" height="68" rx="9" className="fill-ink-muted" opacity="0.55" />
+      <rect x="114" y="308" width="26" height="68" rx="9" className="fill-ink-muted" opacity="0.55" />
+
+      {/* Drive shafts */}
+      <line x1="26" y1="82" x2="38" y2="82" className="stroke-line" strokeWidth="2" />
+      <line x1="102" y1="82" x2="114" y2="82" className="stroke-line" strokeWidth="2" />
+      <line x1="26" y1="342" x2="38" y2="342" className="stroke-line" strokeWidth="2" />
+      <line x1="102" y1="342" x2="114" y2="342" className="stroke-line" strokeWidth="2" />
     </svg>
   );
 }
@@ -74,7 +102,6 @@ function CrossStat({ label, grams, pct }: { label: string; grams: number | null;
     </div>
   );
 }
-
 export function ChassisSummary({
   corners,
   frontAxle,
