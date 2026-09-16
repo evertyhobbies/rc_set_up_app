@@ -7,11 +7,10 @@ function CarBody() {
     <svg viewBox="0 0 120 380" className="h-full w-full" aria-hidden="true">
       <path
         d="M40,10 Q60,-4 80,10 L92,45 Q100,70 98,110 L98,270 Q100,310 92,335 L80,370 Q60,384 40,370 L28,335 Q20,310 22,270 L22,110 Q20,70 28,45 Z"
-        fill="var(--surface-2)"
-        stroke="var(--border)"
+        className="fill-surface-2 stroke-line"
         strokeWidth="1.5"
       />
-      <rect x="38" y="130" width="44" height="120" rx="12" fill="var(--surface-1)" opacity="0.7" />
+      <rect x="38" y="130" width="44" height="120" rx="12" className="fill-surface-1" opacity="0.7" />
     </svg>
   );
 }
