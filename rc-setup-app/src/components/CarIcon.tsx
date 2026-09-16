@@ -76,10 +76,11 @@ function F1Car() {
       {/* Rear wing */}
       <rect x="24" y="352" width="92" height="10" rx="4" className="fill-accent/40 stroke-accent/60" strokeWidth="1" />
       {/* Exposed wheels sit further out than the chassis for an open-wheel look */}
-      <Wheels inset={-2} width={26} />
+      <Wheels inset={0} width={26} />
     </svg>
   );
 }
+
 function NascarCar() {
   return (
     <svg viewBox="0 0 140 400" className="h-auto w-full" aria-hidden="true">
@@ -110,11 +111,11 @@ function BuggyCar() {
       {/* Roll cage */}
       <path d="M50,110 L50,270 M90,110 L90,270 M50,120 L90,120 M50,260 L90,260" fill="none" className="stroke-ink-muted" strokeWidth="3" />
       <rect x="56" y="150" width="28" height="80" rx="6" className="fill-surface-1" opacity="0.8" />
-      {/* Big knobby off-road tires, pushed further out and taller */}
-      <rect x="-6" y="40" width="30" height="70" rx="10" className="fill-ink-muted" opacity="0.6" />
-      <rect x="116" y="40" width="30" height="70" rx="10" className="fill-ink-muted" opacity="0.6" />
-      <rect x="-6" y="290" width="30" height="70" rx="10" className="fill-ink-muted" opacity="0.6" />
-      <rect x="116" y="290" width="30" height="70" rx="10" className="fill-ink-muted" opacity="0.6" />
+      {/* Big knobby off-road tires, wider stance than the other icons */}
+      <rect x="0" y="40" width="28" height="70" rx="10" className="fill-ink-muted" opacity="0.6" />
+      <rect x="112" y="40" width="28" height="70" rx="10" className="fill-ink-muted" opacity="0.6" />
+      <rect x="0" y="290" width="28" height="70" rx="10" className="fill-ink-muted" opacity="0.6" />
+      <rect x="112" y="290" width="28" height="70" rx="10" className="fill-ink-muted" opacity="0.6" />
     </svg>
   );
 }
