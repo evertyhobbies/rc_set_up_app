@@ -47,6 +47,8 @@ export default async function SetupPage({
         cornerWeightGrams={cornerWeightGrams}
         cornerWeightComputed={cornerWeightComputed}
         raceWeight={raceWeight}
+        carId={carId}
+        bodyStyle={car.bodyStyle}
         setupId={setupId}
         path={path}
       />
