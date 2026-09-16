@@ -1,12 +1,8 @@
 import { getSetupData } from "@/lib/getSetupData";
-import { CornerCard } from "@/components/CornerCard";
-import { Readout } from "@/components/Readout";
-import { ValueInput } from "@/components/ValueInput";
-import { CornerWeightDiagram } from "@/components/CornerWeightDiagram";
+import { ChassisSummary } from "@/components/ChassisSummary";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
-
 
 export default async function SetupPage({
   params,
@@ -25,8 +21,7 @@ export default async function SetupPage({
   const transmission = section("transmission")?.fields ?? [];
   const frontAxle = section("front_axle")?.fields ?? [];
   const rearAxle = section("rear_axle")?.fields ?? [];
-  const cornerWeightGrams =
-    section("corner_weight")?.fields.filter((f) => f.type === "number") ?? [];
+  const cornerWeightGrams = section("corner_weight")?.fields.find((f) => f.type === "number");
   const cornerWeightComputed =
     section("corner_weight")?.fields.filter((f) => f.type === "computed") ?? [];
   const raceWeight = section("race_weight")?.fields ?? [];
@@ -44,54 +39,17 @@ export default async function SetupPage({
         </div>
       </div>
 
-      {/* Car-plan layout: FL / front axle+transmission / FR, then RL / rear axle / RR */}
-      <div className="grid grid-cols-3 gap-2">
-        <CornerCard corner="FL" fields={corners} setupId={setupId} path={path} />
-        <div className="rounded-md border border-line bg-surface-1 px-3 py-2.5">
-          <div className="text-[13px] font-medium text-ink-primary">Front</div>
-          <div className="mt-1 divide-y divide-line/60">
-            {frontAxle.map((f) => (
-              <ValueInput key={f.id} field={f} setupId={setupId} path={path} />
-            ))}
-            {transmission.map((f) =>
-              f.type === "computed" ? (
-                <Readout key={f.id} field={f} highlight />
-              ) : (
-                <ValueInput key={f.id} field={f} setupId={setupId} path={path} />
-              )
-            )}
-          </div>
-        </div>
-        <CornerCard corner="FR" fields={corners} setupId={setupId} path={path} />
-
-        <CornerCard corner="RL" fields={corners} setupId={setupId} path={path} />
-        <div className="rounded-md border border-line bg-surface-1 px-3 py-2.5">
-          <div className="text-[13px] font-medium text-ink-primary">Rear</div>
-          <div className="mt-1 divide-y divide-line/60">
-            {rearAxle.map((f) => (
-              <ValueInput key={f.id} field={f} setupId={setupId} path={path} />
-            ))}
-          </div>
-        </div>
-        <CornerCard corner="RR" fields={corners} setupId={setupId} path={path} />
-      </div>
-
-      {/* Corner weight */}
-      <div className="mt-2">
-        <CornerWeightDiagram
-          gramsField={cornerWeightGrams[0]}
-          computed={cornerWeightComputed}
-          setupId={setupId}
-          path={path}
-        />
-      </div>
-
-      {/* Race weight */}
-      <div className="mt-2 rounded-md border border-line bg-surface-1 px-3 py-2.5">
-        {raceWeight.map((f) => (
-          <ValueInput key={f.id} field={f} setupId={setupId} path={path} />
-        ))}
-      </div>
+      <ChassisSummary
+        corners={corners}
+        frontAxle={frontAxle}
+        rearAxle={rearAxle}
+        transmission={transmission}
+        cornerWeightGrams={cornerWeightGrams}
+        cornerWeightComputed={cornerWeightComputed}
+        raceWeight={raceWeight}
+        setupId={setupId}
+        path={path}
+      />
     </main>
   );
 }
