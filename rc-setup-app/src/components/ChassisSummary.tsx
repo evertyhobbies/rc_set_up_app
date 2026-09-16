@@ -78,7 +78,7 @@ function FieldCluster({
   path: string;
 }) {
   return (
-    <div className="flex flex-wrap items-start justify-center gap-x-6 gap-y-3">
+    <div className="flex flex-wrap items-start justify-center gap-x-8 gap-y-6 px-2">
       {fields.map((f) =>
         f.type === "computed" ? (
           <Readout key={f.id} field={f} stacked size="sm" highlight />
@@ -102,6 +102,7 @@ function CrossStat({ label, grams, pct }: { label: string; grams: number | null;
     </div>
   );
 }
+
 export function ChassisSummary({
   corners,
   frontAxle,
@@ -163,7 +164,7 @@ export function ChassisSummary({
           {frontPct && <Readout field={frontPct} stacked label="Front weight" />}
         </div>
 
-        <div style={{ gridArea: "front" }}>
+        <div style={{ gridArea: "front" }} className="py-1">
           <FieldCluster fields={frontFields} setupId={setupId} path={path} />
         </div>
 
@@ -193,7 +194,7 @@ export function ChassisSummary({
           <CornerStack corner="RR" cornerFields={corners} gramsField={cornerWeightGrams} setupId={setupId} path={path} />
         </div>
 
-        <div style={{ gridArea: "rear" }}>
+        <div style={{ gridArea: "rear" }} className="py-1">
           <FieldCluster fields={rearFields} setupId={setupId} path={path} />
         </div>
 
