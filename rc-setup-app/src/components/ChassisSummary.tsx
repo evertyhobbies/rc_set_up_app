@@ -4,13 +4,13 @@ import { Readout } from "./Readout";
 
 function CarBody() {
   return (
-    <svg viewBox="0 0 120 620" className="h-full w-full" aria-hidden="true">
+    <svg viewBox="0 0 120 425" className="h-auto w-full" aria-hidden="true">
       <path
-        d="M40,10 Q60,-4 80,10 L92,45 Q100,70 98,110 L98,510 Q100,550 92,575 L80,610 Q60,624 40,610 L28,575 Q20,550 22,510 L22,110 Q20,70 28,45 Z"
+        d="M40,7 Q60,-3 80,7 L92,31 Q100,48 98,75 L98,347 Q100,374 92,391 L80,415 Q60,424 40,415 L28,391 Q20,374 22,347 L22,75 Q20,48 28,31 Z"
         className="fill-surface-2 stroke-line"
         strokeWidth="1.5"
       />
-      <rect x="38" y="130" width="44" height="360" rx="12" className="fill-surface-1" opacity="0.7" />
+      <rect x="38" y="88" width="44" height="245" rx="12" className="fill-surface-1" opacity="0.7" />
     </svg>
   );
 }
@@ -29,7 +29,7 @@ function CornerStack({
   path: string;
 }) {
   return (
-    <div className="grid grid-cols-2 gap-x-4 gap-y-3 rounded-md border border-line px-3 py-3">
+    <div className="grid grid-cols-2 gap-x-4 gap-y-2 rounded-md border border-line px-3 py-2.5">
       {cornerFields.map((f) => (
         <ValueInput key={f.id} field={f} corner={corner} setupId={setupId} path={path} stacked size="sm" />
       ))}
@@ -108,7 +108,7 @@ export function ChassisSummary({
   return (
     <div className="rounded-md border border-line bg-surface-1 px-4 py-4">
       <div
-        className="grid gap-y-5 gap-x-2"
+        className="grid gap-y-3 gap-x-2"
         style={{
           gridTemplateColumns: "1fr 110px 1fr",
           gridTemplateAreas:
@@ -126,7 +126,7 @@ export function ChassisSummary({
         <div style={{ gridArea: "lf" }} className="self-start justify-self-end">
           <CornerStack corner="FL" cornerFields={corners} gramsField={cornerWeightGrams} setupId={setupId} path={path} />
         </div>
-        <div style={{ gridArea: "car" }} className="mx-auto flex h-full items-center justify-center px-2">
+        <div style={{ gridArea: "car" }} className="mx-auto flex w-full items-start justify-center px-2 pt-2">
           <CarBody />
         </div>
         <div style={{ gridArea: "rf" }} className="self-start justify-self-start">
