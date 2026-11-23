@@ -33,7 +33,10 @@ export async function sheetWidgetsFor(templateId: string) {
 }
 
 export function aiError(err: unknown) {
-  const e = err as { name?: string; status?: number; message?: string };
+  const e = err as { name?: string; status?: number; message?: string; error?: { error?: { message?: string } } };
   const status = e.name === "AiNotConfigured" || e.constructor?.name === "AiNotConfigured" ? 412 : e.status && e.status < 600 ? e.status : 500;
-  return Response.json({ error: e.message ?? String(err) }, { status });
+  // Anthropic API errors carry a readable message inside the JSON body
+  const apiMessage = e.error?.error?.message;
+  const message = apiMessage ? `Anthropic API: ${apiMessage}` : e.message ?? String(err);
+  return Response.json({ error: message }, { status });
 }
