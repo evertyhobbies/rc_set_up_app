@@ -48,6 +48,8 @@ export const carModels = pgTable("car_models", {
   modelName: text("model_name"), // "X4"
   year: integer("year"), // 2022
   scale: text("scale"), // "1/10"
+  // Manufacturer's download page for this model/year (setup sheets, manuals, parts lists)
+  downloadsUrl: text("downloads_url"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

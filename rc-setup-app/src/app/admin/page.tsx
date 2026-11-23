@@ -15,12 +15,13 @@ type Row = {
   files: number;
   versions: number;
   slots: number;
+  downloads_url: string | null;
 };
 
 /** Admin: the model database. One row per model/year. */
 export default async function AdminPage() {
   const models = await rows<Row>(sql`
-    SELECT m.id, m.manufacturer, m.name, m.car_class, m.scale,
+    SELECT m.id, m.manufacturer, m.name, m.car_class, m.scale, m.downloads_url,
            EXISTS (SELECT 1 FROM setup_templates t WHERE t.car_model_id = m.id AND t.sheet_name IS NOT NULL) AS has_sheet,
            (SELECT count(*)::int FROM model_files f WHERE f.car_model_id = m.id) AS files,
            (SELECT count(*)::int FROM setups s WHERE s.car_model_id = m.id AND s.version_no IS NOT NULL) AS versions,
@@ -53,6 +54,7 @@ export default async function AdminPage() {
                 {m.has_sheet ? "sheet ✓" : "no sheet"}
               </span>
               <span className="rounded border border-line px-1.5 py-0.5 text-ink-muted">{m.files} files</span>
+              {m.downloads_url && <span className="rounded border border-line px-1.5 py-0.5 text-ink-muted">link ✓</span>}
               <span className="rounded border border-line px-1.5 py-0.5 text-ink-muted">{m.slots} summary</span>
               <span className="rounded border border-line px-1.5 py-0.5 text-ink-muted">v{m.versions}</span>
             </div>

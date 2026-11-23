@@ -29,6 +29,13 @@
       "when": 1795460918956,
       "tag": "0003_model_db_versions",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1795467114179,
+      "tag": "0004_model_downloads_url",
+      "breakpoints": true
     }
   ]
 }

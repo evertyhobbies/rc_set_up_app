@@ -11,6 +11,7 @@ import { PageHeader, btnGhost, btnPrimary } from "@/components/PageHeader";
 import { SheetImporter } from "@/components/SheetImporter";
 import { SlotEditor } from "@/components/SlotEditor";
 import { FileManager } from "@/components/FileManager";
+import { DownloadsLinkEditor } from "@/components/DownloadsLink";
 
 export const dynamic = "force-dynamic";
 
@@ -100,9 +101,18 @@ export default async function AdminModelPage({
         )}
       </section>
 
-      {/* 3. Files */}
+      {/* 3. Manufacturer download page */}
       <section className="mb-6 rounded-md border border-line bg-surface-1 p-4">
-        <h2 className="text-sm font-medium text-ink-primary">3 · Files</h2>
+        <h2 className="text-sm font-medium text-ink-primary">3 · Manufacturer download page</h2>
+        <p className="mb-3 mt-1 text-sm text-ink-secondary">
+          Link to {model.manufacturer}&apos;s download section for this car: newest setup sheets, manuals and parts lists.
+        </p>
+        <DownloadsLinkEditor carModelId={model.id} initial={model.downloadsUrl} path={path} />
+      </section>
+
+      {/* 4. Files */}
+      <section className="mb-6 rounded-md border border-line bg-surface-1 p-4">
+        <h2 className="text-sm font-medium text-ink-primary">4 · Files</h2>
         <p className="mb-3 mt-1 text-sm text-ink-secondary">Manual, parts list, exploded view and anything else for this model/year.</p>
         <FileManager
           carModelId={model.id}

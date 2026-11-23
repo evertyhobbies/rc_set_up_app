@@ -91,7 +91,14 @@ export default async function ModelPage({ params }: { params: Promise<{ id: stri
       )}
 
       <section>
-        <h2 className="mb-2 font-mono text-[11px] uppercase tracking-wider text-ink-muted">Files</h2>
+        <div className="mb-2 flex items-baseline justify-between gap-3">
+          <h2 className="font-mono text-[11px] uppercase tracking-wider text-ink-muted">Files</h2>
+          {model.downloadsUrl && (
+            <a href={model.downloadsUrl} target="_blank" rel="noreferrer" className="text-xs font-medium text-accent">
+              {model.manufacturer} downloads ↗
+            </a>
+          )}
+        </div>
         <FileManager
           carModelId={model.id}
           readOnly

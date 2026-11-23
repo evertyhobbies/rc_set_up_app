@@ -3,7 +3,7 @@
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
-import { summarySlots } from "@/db/schema";
+import { carModels, summarySlots } from "@/db/schema";
 import { ZONES, type Slot } from "@/lib/summarySlots";
 
 /** Replace the summary layout for a template. */
@@ -21,4 +21,13 @@ export async function saveSlots(templateId: string, slots: Slot[], path: string)
   await db.delete(summarySlots).where(eq(summarySlots.templateId, templateId));
   if (clean.length) await db.insert(summarySlots).values(clean);
   revalidatePath(path);
+}
+
+/** Set (or clear) the manufacturer's download page for a model/year. */
+export async function saveDownloadsUrl(carModelId: string, url: string, path: string) {
+  const trimmed = url.trim();
+  if (trimmed && !/^https?:\/\/[^\s]+$/i.test(trimmed)) return { error: "Enter a full link starting with https://" };
+  await db.update(carModels).set({ downloadsUrl: trimmed || null }).where(eq(carModels.id, carModelId));
+  revalidatePath(path);
+  return { ok: true };
 }
