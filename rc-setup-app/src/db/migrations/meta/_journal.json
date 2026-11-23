@@ -22,6 +22,13 @@
       "when": 1795454969690,
       "tag": "0002_ai_sections",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1795460918956,
+      "tag": "0003_model_db_versions",
+      "breakpoints": true
     }
   ]
 }

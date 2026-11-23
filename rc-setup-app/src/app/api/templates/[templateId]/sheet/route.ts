@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNull, or } from "drizzle-orm";
 import { db } from "@/db";
 import {
   setupTemplates,
@@ -182,11 +182,17 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tem
     // Optionally store values that were already filled in the PDF
     let valuesSaved = 0;
     if (isUuid(b.setupId) && b.values && typeof b.values === "object") {
+      // The setup must use this template: a legacy car on it, or a model/year setup of its model
       const [ok] = await db
         .select({ id: setups.id })
         .from(setups)
-        .innerJoin(cars, eq(cars.id, setups.carId))
-        .where(and(eq(setups.id, b.setupId), eq(cars.templateId, templateId)));
+        .leftJoin(cars, eq(cars.id, setups.carId))
+        .where(
+          and(
+            eq(setups.id, b.setupId),
+            or(eq(cars.templateId, templateId), eq(setups.carModelId, template.carModelId))
+          )
+        );
       if (ok) {
         for (const [pdfField, value] of Object.entries(b.values as Record<string, string>)) {
           const target = fieldFor.get(pdfField);

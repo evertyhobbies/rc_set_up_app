@@ -19,6 +19,25 @@ Base and race-day setups for your RC cars — mobile-first, backed by Neon Postg
   (FL / front / FR on top, RL / rear / RR on bottom, matching the physical
   sheets), with editable fields that save on blur.
 
+## Admin, master setups and versions (current flow)
+
+- **Admin → Model database** (`/admin`): one entry per model/year (e.g. XRAY X4 '26). Each has:
+  1. **Setup sheet:** the manufacturer's editable PDF, which becomes the template. Replacing it with a newer PDF keeps values.
+  2. **Summary layout:** which sheet boxes show on the Summary drawing and where (front, rear, per wheel, bottom strip).
+     It's pre-filled from XRAY-style box names (`fr-ride-height`, `re-camber`, `pinion`…).
+  3. **Files:** manual, parts list, exploded view and more, kept in a **private Vercel Blob** store.
+     Uploads go straight from the browser, so there's no 4.5 MB limit; files are served back through `/api/files/:id`.
+- **Model Select** (`/models`): your model/years. Each has one **Master** (edited on the PDF sheet) and numbered
+  **versions** (v1, v2…), shared by the whole model/year.
+  - **Save master as vN** takes event, track and date from the sheet's own event boxes (`race`, `track`, `date`).
+  - Versions are read-only snapshots. "Load into master" copies one back to work from.
+- **Summary** (`/models/:id/setups/:setupId`): a top-down touring chassis drawing with the chosen values around it.
+  It's read-only and always matches the sheet.
+- **Files** on the home screen lists every model's files.
+
+Needs a Vercel Blob store connected to the project (private, with the read-write token env var for browser uploads).
+Migration `0003_model_db_versions` is additive (`/api/setup/migrate`).
+
 ## Model Select, PDF sheets and setup views (Nov 2026)
 
 - **Home** (`/`): Model Select, Files, Live RC Links, Find Parts (the last three are placeholders).

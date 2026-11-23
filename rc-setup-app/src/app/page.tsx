@@ -2,7 +2,7 @@ import Link from "next/link";
 
 const tiles = [
   { href: "/models", title: "Model Select", desc: "Your cars, setups and setup sheets", ready: true },
-  { href: "/files", title: "Files", desc: "Manuals, exploded views, PDFs", ready: false },
+  { href: "/files", title: "Files", desc: "Manuals, parts lists, exploded views", ready: true },
   { href: "/links", title: "Live RC Links", desc: "Live timing, results, streams", ready: false },
   { href: "/parts", title: "Find Parts", desc: "Part numbers and where to buy", ready: false },
 ];
@@ -31,6 +31,9 @@ export default function HomePage() {
           </Link>
         ))}
       </div>
+      <Link href="/admin" className="mt-6 inline-block text-sm text-ink-muted hover:text-accent">
+        Admin · model database →
+      </Link>
     </main>
   );
 }

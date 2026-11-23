@@ -124,9 +124,11 @@ export const cars = pgTable("cars", {
 // a "race" snapshot copied from base and tied to an event.
 export const setups = pgTable("setups", {
   id: uuid("id").primaryKey().defaultRandom(),
-  carId: uuid("car_id")
-    .notNull()
-    .references(() => cars.id),
+  // Legacy per-car setups use car_id. Model/year setups (master + versions) use car_model_id.
+  carId: uuid("car_id").references(() => cars.id),
+  carModelId: uuid("car_model_id").references(() => carModels.id),
+  isMaster: boolean("is_master").notNull().default(false),
+  versionNo: integer("version_no"), // 1, 2, 3… for saved versions; null for the master
   kind: setupKindEnum("kind").notNull().default("base"),
   name: text("name").notNull(), // "Base" or "HTO — Sept club race"
   track: text("track"),
@@ -222,4 +224,33 @@ export const sheetWidgets = pgTable("sheet_widgets", {
   unit: text("unit"),
   choiceLabel: text("choice_label"), // e.g. "4°" for one box of a caster picker
   sortOrder: integer("sort_order"),
+});
+
+// ---------------------------------------------------------------------------
+// Reference files per model/year (manual, parts list, exploded view…), stored in Vercel Blob (private)
+export const modelFiles = pgTable("model_files", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  carModelId: uuid("car_model_id")
+    .notNull()
+    .references(() => carModels.id, { onDelete: "cascade" }),
+  kind: text("kind").notNull(), // manual | parts_list | exploded_view | other
+  title: text("title").notNull(),
+  filename: text("filename").notNull(),
+  pathname: text("pathname").notNull(), // Blob pathname
+  contentType: text("content_type"),
+  size: integer("size"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Where sheet values appear on the Summary drawing
+export const summarySlots = pgTable("summary_slots", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  templateId: uuid("template_id")
+    .notNull()
+    .references(() => setupTemplates.id, { onDelete: "cascade" }),
+  zone: text("zone").notNull(), // front | rear | FL | FR | RL | RR | center
+  pdfField: text("pdf_field").notNull(), // the sheet box shown
+  label: text("label").notNull(),
+  unit: text("unit"),
+  sortOrder: integer("sort_order").notNull().default(0),
 });

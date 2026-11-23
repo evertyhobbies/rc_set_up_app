@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import {
   setups,
@@ -34,11 +34,17 @@ export async function getSetupData(setupId: string) {
   const [setup] = await db.select().from(setups).where(eq(setups.id, setupId));
   if (!setup) return null;
 
-  const [car] = await db.select().from(cars).where(eq(cars.id, setup.carId));
-  const [template] = await db
-    .select()
-    .from(setupTemplates)
-    .where(eq(setupTemplates.id, car.templateId));
+  // Legacy setups hang off a car; model/year setups (master + versions) hang off the model
+  const [car] = setup.carId ? await db.select().from(cars).where(eq(cars.id, setup.carId)) : [null];
+  const [template] = car
+    ? await db.select().from(setupTemplates).where(eq(setupTemplates.id, car.templateId))
+    : await db
+        .select()
+        .from(setupTemplates)
+        .where(eq(setupTemplates.carModelId, setup.carModelId ?? ""))
+        .orderBy(desc(setupTemplates.version))
+        .limit(1);
+  if (!template) return null;
   const [model] = await db
     .select()
     .from(carModels)

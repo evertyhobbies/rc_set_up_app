@@ -28,9 +28,10 @@ export default async function SetupPage({
   const sp = await searchParams;
   if (!isUuid(carId) || !isUuid(setupId)) notFound();
   const data = await getSetupData(setupId);
-  if (!data || data.car.id !== carId) notFound();
+  if (!data || !data.car || data.car.id !== carId) notFound();
 
-  const { car, model, setup, sections, template } = data;
+  const { model, setup, sections, template } = data;
+  const car = data.car!;
   const section = (key: string) => sections.find((s) => s.key === key);
   const path = `/cars/${carId}/setups/${setupId}`;
 

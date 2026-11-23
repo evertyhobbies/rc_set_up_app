@@ -38,6 +38,7 @@ export function SheetView({
   initialValues,
   setupId,
   path,
+  readOnly = false,
 }: {
   templateId: string;
   pages: SheetPage[];
@@ -45,16 +46,18 @@ export function SheetView({
   initialValues: SheetValues;
   setupId: string;
   path: string;
+  readOnly?: boolean;
 }) {
   const [values, setValues] = useState(initialValues);
-  const [locked, setLocked] = useState(false);
+  const [lockedByUser, setLocked] = useState(false);
+  const locked = readOnly || lockedByUser;
   const [pending, start] = useTransition();
 
   const save = useSaver(setupId, path, setValues, start);
 
   return (
     <div>
-      <div className="mb-3 flex items-center gap-3">
+      <div className={`mb-3 flex items-center gap-3 ${readOnly ? "hidden" : ""}`}>
         <button
           onClick={() => setLocked(!locked)}
           className="rounded-md border border-line bg-surface-1 px-3 py-1.5 text-xs font-medium text-ink-primary hover:border-accent/40"
@@ -86,6 +89,7 @@ export function SheetView({
                     page={p}
                     value={displayValue(values, w)}
                     onSave={(v) => save(w, v)}
+                    readOnly={locked}
                   />
                 ))}
             </div>
@@ -117,7 +121,19 @@ export function useSaver(
   };
 }
 
-export function Box({ w, page, value, onSave }: { w: SheetWidget; page: SheetPage; value: string; onSave: (v: string) => void }) {
+export function Box({
+  w,
+  page,
+  value,
+  onSave,
+  readOnly = false,
+}: {
+  w: SheetWidget;
+  page: SheetPage;
+  value: string;
+  onSave: (v: string) => void;
+  readOnly?: boolean;
+}) {
   const [draft, setDraft] = useState(value);
   const [focused, setFocused] = useState(false);
   const heightPts = w.h * page.height;
@@ -141,6 +157,7 @@ export function Box({ w, page, value, onSave }: { w: SheetWidget; page: SheetPag
         type="button"
         title={title}
         className={`${cls} sheet-mark`}
+        disabled={readOnly}
         style={{ ...style, fontSize: `${((heightPts * 0.9) / page.width) * 100}cqw`, padding: 0 }}
         onClick={() => onSave(on ? "" : onValue)}
       >
@@ -150,7 +167,7 @@ export function Box({ w, page, value, onSave }: { w: SheetWidget; page: SheetPag
   }
   if (w.kind === "choice") {
     return (
-      <select title={title} className={cls} style={style} value={value} onChange={(e) => onSave(e.target.value)}>
+      <select title={title} className={cls} style={style} value={value} disabled={readOnly} onChange={(e) => onSave(e.target.value)}>
         <option value="" />
         {w.options?.map((o) => (
           <option key={o.value} value={o.value}>{o.label}</option>
@@ -163,6 +180,8 @@ export function Box({ w, page, value, onSave }: { w: SheetWidget; page: SheetPag
     title,
     className: cls,
     style,
+    readOnly,
+    tabIndex: readOnly ? -1 : undefined,
     value: focused ? draft : value,
     onFocus: () => {
       setDraft(value);
@@ -171,7 +190,7 @@ export function Box({ w, page, value, onSave }: { w: SheetWidget; page: SheetPag
     onChange: (e: { target: { value: string } }) => setDraft(e.target.value),
     onBlur: () => {
       setFocused(false);
-      if (draft !== value) onSave(draft);
+      if (!readOnly && draft !== value) onSave(draft);
     },
   };
   return w.multiline ? <textarea {...common} /> : <input {...common} />;
