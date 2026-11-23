@@ -1,55 +1,35 @@
-import { eq } from "drizzle-orm";
-import { db } from "@/db";
-import { cars, carModels, setupTemplates, setups } from "@/db/schema";
+import Link from "next/link";
 
-export const dynamic = "force-dynamic";
+const tiles = [
+  { href: "/models", title: "Model Select", desc: "Your cars, setups and setup sheets", ready: true },
+  { href: "/files", title: "Files", desc: "Manuals, exploded views, PDFs", ready: false },
+  { href: "/links", title: "Live RC Links", desc: "Live timing, results, streams", ready: false },
+  { href: "/parts", title: "Find Parts", desc: "Part numbers and where to buy", ready: false },
+];
 
-
-export default async function GaragePage() {
-  const rows = await db
-    .select({
-      carId: cars.id,
-      nickname: cars.nickname,
-      manufacturer: carModels.manufacturer,
-      model: carModels.name,
-      carClass: carModels.carClass,
-    })
-    .from(cars)
-    .innerJoin(setupTemplates, eq(cars.templateId, setupTemplates.id))
-    .innerJoin(carModels, eq(setupTemplates.carModelId, carModels.id));
-
-  const baseSetups = await db
-    .select({ id: setups.id, carId: setups.carId })
-    .from(setups)
-    .where(eq(setups.kind, "base"));
-
+export default function HomePage() {
   return (
-    <main className="min-h-screen bg-surface-0 px-5 py-8">
-      <h1 className="text-lg font-medium tracking-tight text-ink-primary">Garage</h1>
-      <p className="mt-1 text-sm text-ink-secondary">Base setups for every car</p>
-
-      <div className="mt-6 flex flex-col gap-2">
-        {rows.map((car) => {
-          const base = baseSetups.find((s) => s.carId === car.carId);
-          return (
-            <a
-              key={car.carId}
-              href={base ? `/cars/${car.carId}/setups/${base.id}` : "#"}
-              className="flex items-center justify-between rounded-md border border-line bg-surface-1 px-4 py-3 transition-colors hover:border-accent/40"
-            >
-              <div>
-                <div className="text-sm font-medium text-ink-primary">{car.nickname}</div>
-                <div className="text-xs text-ink-secondary">
-                  {car.manufacturer} {car.model} · {car.carClass}
-                </div>
-              </div>
-              <span className="font-mono text-xs text-ink-muted">→</span>
-            </a>
-          );
-        })}
-        {rows.length === 0 && (
-          <p className="text-sm text-ink-muted">No cars yet — add one to your garage.</p>
-        )}
+    <main className="mx-auto min-h-screen max-w-3xl bg-surface-0 px-5 py-10">
+      <div className="mb-8">
+        <div className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent">Everty Hobbies</div>
+        <h1 className="mt-1 text-2xl font-medium tracking-tight text-ink-primary">RC Setup Sheets</h1>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {tiles.map((t) => (
+          <Link
+            key={t.href}
+            href={t.href}
+            className="flex min-h-32 flex-col justify-end rounded-md border border-line bg-surface-1 p-5 transition-colors hover:border-accent/40"
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-base font-medium text-ink-primary">{t.title}</span>
+              {!t.ready && (
+                <span className="rounded border border-line px-1.5 py-0.5 font-mono text-[10px] uppercase text-ink-muted">soon</span>
+              )}
+            </div>
+            <span className="mt-1 text-sm text-ink-secondary">{t.desc}</span>
+          </Link>
+        ))}
       </div>
     </main>
   );

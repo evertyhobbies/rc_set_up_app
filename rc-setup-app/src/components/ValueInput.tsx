@@ -34,6 +34,33 @@ export function ValueInput({
 
   const displayLabel = label ?? field.label;
 
+  // On/off box imported from a PDF sheet — stores the PDF's "on" value or nothing
+  if (field.type === "checkbox") {
+    const onValue = field.options?.[0] ?? "Yes";
+    const on = value !== "";
+    const toggle = (
+      <button
+        type="button"
+        onClick={() => commit(on ? "" : onValue)}
+        style={{ opacity: isPending ? 0.6 : 1 }}
+        className={`rounded px-2 py-0.5 font-mono text-[13px] ${on ? "bg-accent text-surface-0" : "border border-line text-ink-muted"}`}
+      >
+        {on ? "✓" : "—"}
+      </button>
+    );
+    return stacked ? (
+      <div className="flex flex-col items-center gap-0.5">
+        <span className="text-[11px] font-medium text-accent">{displayLabel}</span>
+        {toggle}
+      </div>
+    ) : (
+      <div className="flex items-baseline justify-between py-1.5">
+        <span className="text-[13px] text-ink-secondary">{displayLabel}</span>
+        {toggle}
+      </div>
+    );
+  }
+
   if (stacked) {
     const valueTextClass = size === "sm" ? "text-base" : "text-2xl";
     const labelTextClass = size === "sm" ? "text-[11px]" : "text-[13px]";

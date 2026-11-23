@@ -19,6 +19,39 @@ Base and race-day setups for your RC cars — mobile-first, backed by Neon Postg
   (FL / front / FR on top, RL / rear / RR on bottom, matching the physical
   sheets), with editable fields that save on blur.
 
+## Model Select, PDF sheets and setup views (Nov 2026)
+
+- **Home** (`/`): Model Select, Files, Live RC Links, Find Parts (the last three are placeholders).
+- **Model Select** (`/models`, was the old `/` Garage): your cars, plus **Create new model → from scratch**:
+  Type → Manufacturer → Scale → Model → Year → name it. Choices come from the `car_types`, `manufacturers`,
+  `scales` and `car_models` tables, and every step has **+ Add new**. A new year of a model you already have
+  (e.g. X4 '26 next to X4 '22) copies that model's summary layout, calculations and constants.
+- **Car page** (`/cars/:id`): base and race setups, **New setup** (blank or copying all values from another),
+  and **upload the setup sheet PDF**. The browser renders each page to an image and reads every fillable box.
+  Each box becomes a field in a "Setup sheet" section (detail tier), so its values go in `setup_values` like the rest.
+- **Setup page** tabs:
+  - **Summary**: the corner layout, as before
+  - **Sheet**: the real PDF sheet with editable boxes
+  - **All fields**: a list view (Main, or Main + detail)
+  All three read and write the same values.
+- **Link fields** (`/templates/:id/map`): point a sheet box at a summary field (e.g. the sheet's front-left ride
+  height → Ride height · FL) so both views share one value. Existing values move across. Boxes left as "Sheet only"
+  can be renamed and promoted to the Main tier. Re-importing a newer PDF keeps these links.
+
+### Deploying this update
+
+1. Merge the branch (Vercel builds a preview first).
+2. Visit `/api/setup/migrate` once. Migration `0001_sheets_and_catalog` is additive and safe to re-run.
+   Your existing cars, setups and values are untouched. It also:
+   - adds the lookup lists,
+   - fills in model / year / scale for existing models (X4 '22 → X4, 2022, 1/10),
+   - adds an X4 '26 model, with its constants copied from the X4 '22.
+3. Model Select → Create new → Touring → Xray → 1/10 → X4 → 2026, then upload the **Editable** sheet
+   (`x4_2026_set_up_editable_v02.pdf` from teamxray.com). The flattened "Basic" sheets have no fillable boxes.
+
+Local dev also works against a plain Postgres: `src/db/index.ts` uses node-postgres when `DATABASE_URL`
+isn't a Neon URL. `npm install` copies the pdf.js worker into `public/` (see `scripts/copy-pdf-worker.mjs`).
+
 ## Set up entirely in the browser (no terminal)
 
 1. **GitHub** — go to github.com → New repository → create it empty (no

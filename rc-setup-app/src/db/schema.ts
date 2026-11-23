@@ -6,6 +6,9 @@ import {
   jsonb,
   timestamp,
   pgEnum,
+  real,
+  boolean,
+  primaryKey,
 } from "drizzle-orm/pg-core";
 
 // Field data type — how the value is entered/rendered
@@ -14,6 +17,7 @@ export const fieldTypeEnum = pgEnum("field_type", [
   "text",
   "select",
   "computed",
+  "checkbox", // single on/off box from an imported PDF sheet
 ]);
 
 // Which part of the car a field belongs to. Drives both layout (where it
@@ -40,6 +44,10 @@ export const carModels = pgTable("car_models", {
   name: text("name").notNull(), // "X4 '22"
   carClass: text("car_class").notNull(), // "Touring", "Nascar", "F1", "Buggy"
   constants: jsonb("constants").notNull().default({}),
+  // Split out for the Create New wizard (type → manufacturer → scale → model → year).
+  modelName: text("model_name"), // "X4"
+  year: integer("year"), // 2022
+  scale: text("scale"), // "1/10"
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -53,6 +61,9 @@ export const setupTemplates = pgTable("setup_templates", {
     .references(() => carModels.id),
   version: integer("version").notNull().default(1),
   name: text("name").notNull(), // "Xray X4 '22 — standard"
+  // Set once a manufacturer's editable PDF sheet has been imported.
+  sheetName: text("sheet_name"),
+  sheetFilename: text("sheet_filename"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -131,4 +142,67 @@ export const setupValues = pgTable("setup_values", {
     .references(() => templateFields.id),
   corner: cornerEnum("corner"),
   value: text("value"), // stored as text, parsed per field.type on read
+});
+
+// ---------------------------------------------------------------------------
+// Lookup lists for the Create New wizard. car_models keeps its text columns;
+// these just supply the choices (and grow via "+ Add new").
+export const carTypes = pgTable("car_types", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull().unique(), // matches car_models.car_class
+  sortOrder: integer("sort_order").notNull().default(100),
+});
+
+export const manufacturers = pgTable("manufacturers", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull().unique(), // matches car_models.manufacturer
+});
+
+export const scales = pgTable("scales", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  label: text("label").notNull().unique(), // matches car_models.scale
+  sortOrder: integer("sort_order").notNull().default(100),
+});
+
+// ---------------------------------------------------------------------------
+// Imported PDF setup sheet. Each page is stored as a rendered image (the
+// sheet artwork without form fields); each PDF form field becomes a widget
+// positioned on that image. Widgets point at a template_field (+ corner), so
+// the sheet view and the summary view read and write the same setup_values.
+export const sheetPages = pgTable(
+  "sheet_pages",
+  {
+    templateId: uuid("template_id")
+      .notNull()
+      .references(() => setupTemplates.id, { onDelete: "cascade" }),
+    pageIndex: integer("page_index").notNull(),
+    width: real("width").notNull(), // PDF points
+    height: real("height").notNull(),
+    mime: text("mime"),
+    imageB64: text("image_b64"),
+  },
+  (t) => [primaryKey({ columns: [t.templateId, t.pageIndex] })]
+);
+
+export const sheetWidgets = pgTable("sheet_widgets", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  templateId: uuid("template_id")
+    .notNull()
+    .references(() => setupTemplates.id, { onDelete: "cascade" }),
+  pageIndex: integer("page_index").notNull(),
+  pdfField: text("pdf_field").notNull(), // the PDF's own field name
+  kind: text("kind").notNull(), // text | checkbox | radio | choice
+  exportValue: text("export_value"), // value a checkbox/radio sets when on
+  options: jsonb("options"), // choice options
+  // Position as a 0..1 fraction of the page, top-left origin
+  x: real("x").notNull(),
+  y: real("y").notNull(),
+  w: real("w").notNull(),
+  h: real("h").notNull(),
+  fontSize: real("font_size"),
+  multiline: boolean("multiline").notNull().default(false),
+  align: integer("align").notNull().default(0),
+  // Where this widget's value lives
+  fieldId: uuid("field_id").references(() => templateFields.id, { onDelete: "set null" }),
+  corner: cornerEnum("corner"),
 });

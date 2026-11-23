@@ -16,7 +16,7 @@ export type RenderField = {
   key: string;
   label: string;
   unit: string | null;
-  type: "number" | "text" | "select" | "computed";
+  type: "number" | "text" | "select" | "computed" | "checkbox";
   scope: "car" | "axle_front" | "axle_rear" | "corner";
   tier: "main" | "detail";
   options: string[] | null;
