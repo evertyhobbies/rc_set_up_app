@@ -211,8 +211,8 @@ For every distinct box name, return:
                   type: ["object", "null"],
                   properties: {
                     field_key: { type: "string" },
-                    corner: { type: ["string", "null"], enum: ["FL", "FR", "RL", "RR", null] },
-                    axle: { type: ["string", "null"], enum: ["front", "rear", null] },
+                    corner: { anyOf: [{ type: "string", enum: ["FL", "FR", "RL", "RR"] }, { type: "null" }] },
+                    axle: { anyOf: [{ type: "string", enum: ["front", "rear"] }, { type: "null" }] },
                   },
                   required: ["field_key", "corner", "axle"],
                 },
