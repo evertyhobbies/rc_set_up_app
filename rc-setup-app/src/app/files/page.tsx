@@ -2,7 +2,7 @@ import Link from "next/link";
 import { sql } from "drizzle-orm";
 import { rows } from "@/lib/rows";
 import { PageHeader } from "@/components/PageHeader";
-import { FILE_KINDS } from "@/components/FileManager";
+import { FILE_KINDS } from "@/lib/fileKinds";
 
 export const dynamic = "force-dynamic";
 

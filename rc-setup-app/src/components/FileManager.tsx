@@ -4,14 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { upload } from "@vercel/blob/client";
 import { btnPrimary, input } from "./PageHeader";
+import { FILE_KINDS } from "@/lib/fileKinds";
 
-export const FILE_KINDS: Record<string, string> = {
-  manual: "Manual",
-  parts_list: "Parts list",
-  exploded_view: "Exploded view",
-  setup_sheet: "Setup sheet (PDF copy)",
-  other: "Other",
-};
 
 type FileRow = { id: string; kind: string; title: string; filename: string; size: number | null; createdAt: string };
 
