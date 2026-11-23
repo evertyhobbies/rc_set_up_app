@@ -9,6 +9,9 @@ export async function seedX4(db: typeof DbType) {
       manufacturer: "Xray",
       name: "X4 '22",
       carClass: "Touring",
+      modelName: "X4",
+      year: 2022,
+      scale: "1/10",
       // Internal ratio is a property of the model, not something typed
       // per race — the transmission formula below reads it from here.
       constants: { internal_ratio: 1.9 },

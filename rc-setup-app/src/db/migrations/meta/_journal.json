@@ -8,6 +8,27 @@
       "when": 1789566568513,
       "tag": "0000_plain_thunderbolt",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1795450611017,
+      "tag": "0001_sheets_and_catalog",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795454969690,
+      "tag": "0002_ai_sections",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1795460918956,
+      "tag": "0003_model_db_versions",
+      "breakpoints": true
     }
   ]
 }

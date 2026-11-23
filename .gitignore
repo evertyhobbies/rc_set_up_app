@@ -1,0 +1,9 @@
+node_modules/
+.next/
+out/
+.env*
+!.env.example
+*.tsbuildinfo
+next-env.d.ts
+.vercel
+rc-setup-app/public/pdf.worker.min.mjs
