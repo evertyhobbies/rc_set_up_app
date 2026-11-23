@@ -8,6 +8,7 @@ import { templateForModel } from "@/lib/templates";
 import { ensureMaster, eventDefaults, listVersions } from "@/lib/modelSetups";
 import { PageHeader, btnGhost, btnPrimary } from "@/components/PageHeader";
 import { SaveVersionForm } from "@/components/SaveVersionForm";
+import { ImportFilledSheet } from "@/components/ImportFilledSheet";
 import { FileManager } from "@/components/FileManager";
 
 export const dynamic = "force-dynamic";
@@ -66,7 +67,12 @@ export default async function ModelPage({ params }: { params: Promise<{ id: stri
           </section>
 
           <section className="mb-8">
-            <h2 className="mb-2 font-mono text-[11px] uppercase tracking-wider text-ink-muted">Versions</h2>
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <h2 className="font-mono text-[11px] uppercase tracking-wider text-ink-muted">Versions</h2>
+            </div>
+            <div className="mb-3">
+              <ImportFilledSheet carModelId={model.id} templateId={template.id} nextVersion={(versions[0]?.versionNo ?? 0) + 1} />
+            </div>
             {versions.length === 0 && <p className="text-sm text-ink-muted">No versions yet. Save the master as v1 when it&apos;s ready.</p>}
             <div className="flex flex-col gap-2">
               {versions.map((v) => (

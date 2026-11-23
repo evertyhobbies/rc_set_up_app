@@ -43,11 +43,18 @@ export async function copyValues(fromSetupId: string, toSetupId: string) {
      WHERE setup_id = ${fromSetupId} AND value IS NOT NULL`);
 }
 
-export async function saveVersion(
-  carModelId: string,
-  input: { name: string; track?: string | null; eventDate?: string | null; notes?: string | null }
-) {
+type VersionMeta = { name: string; track?: string | null; eventDate?: string | null; notes?: string | null };
+
+/** Snapshot the master as the next version. */
+export async function saveVersion(carModelId: string, input: VersionMeta) {
   const master = await ensureMaster(carModelId);
+  const version = await createVersion(carModelId, input);
+  await copyValues(master.id, version.id);
+  return version;
+}
+
+/** A new, empty version numbered after the latest one. */
+export async function createVersion(carModelId: string, input: VersionMeta) {
   const [{ next }] = (
     await db.execute(sql`SELECT COALESCE(MAX(version_no), 0) + 1 AS next FROM setups WHERE car_model_id = ${carModelId}`)
   ).rows as { next: number }[];
@@ -64,8 +71,27 @@ export async function saveVersion(
       notes: input.notes?.trim() || null,
     })
     .returning();
-  await copyValues(master.id, version.id);
   return version;
+}
+
+/**
+ * Write values keyed by the sheet's own box names into a setup. Each box goes
+ * where the template stores it (its field, a corner, or both wheels of an axle).
+ */
+export async function writeSheetValues(templateId: string, setupId: string, values: Record<string, string>) {
+  const widgets = await db.select().from(sheetWidgets).where(eq(sheetWidgets.templateId, templateId));
+  const byName = new Map<string, (typeof widgets)[number]>();
+  for (const w of widgets) if (w.fieldId && !byName.has(w.pdfField)) byName.set(w.pdfField, w);
+  const rows = new Map<string, { setupId: string; fieldId: string; corner: "FL" | "FR" | "RL" | "RR" | null; value: string }>();
+  for (const [name, raw] of Object.entries(values)) {
+    const w = byName.get(name);
+    const value = String(raw ?? "").slice(0, 2000);
+    if (!w?.fieldId || !value) continue;
+    const corners = w.axle === "front" ? (["FL", "FR"] as const) : w.axle === "rear" ? (["RL", "RR"] as const) : [w.corner];
+    for (const corner of corners) rows.set(`${w.fieldId}|${corner ?? ""}`, { setupId, fieldId: w.fieldId, corner, value });
+  }
+  if (rows.size) await db.insert(setupValues).values([...rows.values()]);
+  return rows.size;
 }
 
 /**
