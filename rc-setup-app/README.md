@@ -38,10 +38,27 @@ Base and race-day setups for your RC cars — mobile-first, backed by Neon Postg
   height → Ride height · FL) so both views share one value. Existing values move across. Boxes left as "Sheet only"
   can be renamed and promoted to the Main tier. Re-importing a newer PDF keeps these links.
 
+### Build setup with AI
+
+After a sheet is uploaded, **Build setup with AI** on the car page has Claude read it:
+1. **Layout:** the whole page goes to the AI, which returns the sheet's sections with bounding boxes.
+2. **Sections:** the browser cuts a sharp close-up of each section with every box outlined and numbered.
+   The AI returns a label, unit, main/detail tier and storage for every box. Storage is either its own
+   field, or a link to a summary field (a corner, or a whole axle, e.g. front ride height → FL + FR).
+   Up to 4 sections run at once, each in its own short request.
+3. **Review:** the proposal shows as cards. Edit labels, units, tiers and links, then **Apply**.
+
+The setup page then gets a **Setup** tab: one card per section, with the manufacturer's own drawing
+(boxes live and clickable on it) next to a clean list of that section's settings.
+Re-running keeps all values, and so does re-uploading a newer PDF.
+
+Needs `ANTHROPIC_API_KEY` in Vercel (Production + Preview). Optional: `AI_MODEL` (default `claude-opus-5-5`).
+`AI_MOCK=1` returns canned answers for local testing.
+
 ### Deploying this update
 
 1. Merge the branch (Vercel builds a preview first).
-2. Visit `/api/setup/migrate` once. Migration `0001_sheets_and_catalog` is additive and safe to re-run.
+2. Visit `/api/setup/migrate` once. Migrations `0001_sheets_and_catalog` and `0002_ai_sections` are additive and safe to re-run.
    Your existing cars, setups and values are untouched. It also:
    - adds the lookup lists,
    - fills in model / year / scale for existing models (X4 '22 → X4, 2022, 1/10),

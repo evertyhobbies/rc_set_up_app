@@ -23,9 +23,17 @@ async function sheetSection(templateId: string) {
 export async function linkPdfField(templateId: string, pdfField: string, target: string, path: string) {
   let fieldId: string;
   let corner: Corner | null = null;
+  let axle: "front" | "rear" | null = null;
 
   if (target === "own") {
-    const section = await sheetSection(templateId);
+    const [current] = await db
+      .select({ sectionId: sheetWidgets.sectionId })
+      .from(sheetWidgets)
+      .where(and(eq(sheetWidgets.templateId, templateId), eq(sheetWidgets.pdfField, pdfField)))
+      .limit(1);
+    const section = current?.sectionId
+      ? (await db.select().from(templateSections).where(eq(templateSections.id, current.sectionId)))[0]
+      : await sheetSection(templateId);
     if (!section) throw new Error("Import a sheet first");
     const label = pdfField.replace(/[_.\-]+/g, " ").replace(/([a-z])([A-Z])/g, "$1 $2").trim();
     const [widget] = await db
@@ -64,44 +72,50 @@ export async function linkPdfField(templateId: string, pdfField: string, target:
   } else {
     const [id, c] = target.split("|");
     fieldId = id;
-    corner = (c as Corner) || null;
+    if (c === "axle:front" || c === "axle:rear") axle = c.slice(5) as "front" | "rear";
+    else corner = (c as Corner) || null;
   }
 
   // Where this box's values live right now
   const [before] = await db
-    .select({ fieldId: sheetWidgets.fieldId, corner: sheetWidgets.corner })
+    .select({ fieldId: sheetWidgets.fieldId, corner: sheetWidgets.corner, axle: sheetWidgets.axle, sectionId: sheetWidgets.sectionId })
     .from(sheetWidgets)
     .where(and(eq(sheetWidgets.templateId, templateId), eq(sheetWidgets.pdfField, pdfField)))
     .limit(1);
 
   await db
     .update(sheetWidgets)
-    .set({ fieldId, corner })
+    .set({ fieldId, corner, axle })
     .where(and(eq(sheetWidgets.templateId, templateId), eq(sheetWidgets.pdfField, pdfField)));
 
   // Carry values over to the new target, without overwriting anything already there
-  if (before?.fieldId && (before.fieldId !== fieldId || before.corner !== corner)) {
-    await db.execute(sql`
-      INSERT INTO setup_values (setup_id, field_id, corner, value)
-      SELECT v.setup_id, ${fieldId}, ${corner}::corner, v.value
-        FROM setup_values v
-       WHERE v.field_id = ${before.fieldId}
-         AND v.corner IS NOT DISTINCT FROM ${before.corner}::corner
-         AND v.value IS NOT NULL
-         AND NOT EXISTS (
-           SELECT 1 FROM setup_values t
-            WHERE t.setup_id = v.setup_id AND t.field_id = ${fieldId}
-              AND t.corner IS NOT DISTINCT FROM ${corner}::corner AND t.value IS NOT NULL)`);
+  if (before?.fieldId && (before.fieldId !== fieldId || before.corner !== corner || before.axle !== axle)) {
+    // Read from the box's old spot (an axle-wide box reads its left wheel) into every new spot
+    const fromCorner = before.axle === "front" ? "FL" : before.axle === "rear" ? "RL" : before.corner;
+    const toCorners: (Corner | null)[] = axle === "front" ? ["FL", "FR"] : axle === "rear" ? ["RL", "RR"] : [corner];
+    for (const to of toCorners) {
+      await db.execute(sql`
+        INSERT INTO setup_values (setup_id, field_id, corner, value)
+        SELECT v.setup_id, ${fieldId}, ${to}::corner, v.value
+          FROM setup_values v
+         WHERE v.field_id = ${before.fieldId}
+           AND v.corner IS NOT DISTINCT FROM ${fromCorner}::corner
+           AND v.value IS NOT NULL
+           AND NOT EXISTS (
+             SELECT 1 FROM setup_values t
+              WHERE t.setup_id = v.setup_id AND t.field_id = ${fieldId}
+                AND t.corner IS NOT DISTINCT FROM ${to}::corner AND t.value IS NOT NULL)`);
+    }
 
     // The box's old sheet-only field is now unused and its values have moved: remove it
-    const section = await sheetSection(templateId);
     const [old] = await db.select().from(templateFields).where(eq(templateFields.id, before.fieldId));
+    const [oldSection] = old ? await db.select().from(templateSections).where(eq(templateSections.id, old.sectionId)) : [];
     const [stillUsed] = await db
       .select({ id: sheetWidgets.id })
       .from(sheetWidgets)
       .where(eq(sheetWidgets.fieldId, before.fieldId))
       .limit(1);
-    if (old && section && old.sectionId === section.id && !stillUsed) {
+    if (old && oldSection && (oldSection.key === SHEET_SECTION_KEY || oldSection.source === "ai") && !stillUsed) {
       await db.delete(setupValues).where(eq(setupValues.fieldId, before.fieldId));
       await db.delete(templateFields).where(eq(templateFields.id, before.fieldId));
     }

@@ -1,20 +1,21 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { sheetPages, sheetWidgets, setupValues } from "@/db/schema";
+import { sheetPages, sheetWidgets, setupValues, templateSections } from "@/db/schema";
 import { getSetupData } from "@/lib/getSetupData";
 import { isUuid } from "@/lib/rows";
 import { ChassisSummary } from "@/components/ChassisSummary";
 import { SheetView, type SheetWidget } from "@/components/SheetView";
 import { valueKey, type SheetValues } from "@/lib/sheetValues";
 import { AllFields } from "@/components/AllFields";
+import { SetupCards, type CardSection } from "@/components/SetupCards";
 import { DeleteButton } from "@/components/CarActions";
 import { PageHeader } from "@/components/PageHeader";
 
 export const dynamic = "force-dynamic";
 
-type View = "summary" | "sheet" | "fields";
+type View = "summary" | "setup" | "sheet" | "fields";
 
 export default async function SetupPage({
   params,
@@ -35,8 +36,15 @@ export default async function SetupPage({
 
   const hasSummary = !!section("corners");
   const hasSheet = !!template.sheetName;
+  const [aiSection] = await db
+    .select({ id: templateSections.id })
+    .from(templateSections)
+    .where(and(eq(templateSections.templateId, template.id), eq(templateSections.source, "ai")))
+    .limit(1);
+  const hasCards = hasSheet && !!aiSection;
   const views: { key: View; label: string }[] = [
     ...(hasSummary ? [{ key: "summary" as const, label: "Summary" }] : []),
+    ...(hasCards ? [{ key: "setup" as const, label: "Setup" }] : []),
     ...(hasSheet ? [{ key: "sheet" as const, label: "Sheet" }] : []),
     { key: "fields", label: "All fields" },
   ];
@@ -45,7 +53,7 @@ export default async function SetupPage({
   const href = (v: View, t: string = tier) => `${path}?view=${v}${v === "fields" && t === "all" ? "&tier=all" : ""}`;
 
   return (
-    <main className={`mx-auto min-h-screen bg-surface-0 px-4 py-6 ${view === "sheet" ? "max-w-[1500px]" : "max-w-3xl"}`}>
+    <main className={`mx-auto min-h-screen bg-surface-0 px-4 py-6 ${view === "sheet" ? "max-w-[1500px]" : view === "setup" ? "max-w-6xl" : "max-w-3xl"}`}>
       <PageHeader
         back={`/cars/${carId}`}
         eyebrow={`${model.manufacturer} ${model.name} · ${car.nickname}`}
@@ -89,10 +97,19 @@ export default async function SetupPage({
         />
       )}
 
+      {view === "setup" && <Cards templateId={template.id} setupId={setupId} path={path} />}
+
       {view === "sheet" && <Sheet templateId={template.id} setupId={setupId} path={path} />}
 
       {view === "fields" && (
         <AllFields sections={sections} setupId={setupId} path={path} tier={tier} hrefFor={(t) => href("fields", t)} />
+      )}
+
+      {hasSheet && !hasCards && (
+        <p className="mt-6 text-sm text-ink-secondary">
+          Want this sheet laid out as section cards with XRAY&apos;s drawings?{" "}
+          <Link href={`/templates/${template.id}/ai?car=${carId}`} className="text-accent">Build setup with AI</Link>.
+        </p>
       )}
 
       {!hasSheet && (
@@ -125,6 +142,38 @@ async function Sheet({ templateId, setupId, path }: { templateId: string; setupI
   return (
     <SheetView
       templateId={templateId}
+      pages={pages}
+      widgets={widgets as SheetWidget[]}
+      initialValues={initial}
+      setupId={setupId}
+      path={path}
+    />
+  );
+}
+
+async function Cards({ templateId, setupId, path }: { templateId: string; setupId: string; path: string }) {
+  const [sections, pages, widgets, values] = await Promise.all([
+    db
+      .select()
+      .from(templateSections)
+      .where(and(eq(templateSections.templateId, templateId), eq(templateSections.source, "ai")))
+      .orderBy(asc(templateSections.sortOrder)),
+    db
+      .select({ pageIndex: sheetPages.pageIndex, width: sheetPages.width, height: sheetPages.height })
+      .from(sheetPages)
+      .where(eq(sheetPages.templateId, templateId)),
+    db.select().from(sheetWidgets).where(eq(sheetWidgets.templateId, templateId)),
+    db.select().from(setupValues).where(eq(setupValues.setupId, setupId)),
+  ]);
+  const initial: SheetValues = {};
+  for (const v of values) if (v.value !== null) initial[valueKey(v.fieldId, v.corner)] = v.value;
+  const cards: CardSection[] = sections
+    .filter((s) => s.cropPage !== null)
+    .map((s) => ({ id: s.id, label: s.label, cropPage: s.cropPage!, cropX: s.cropX ?? 0, cropY: s.cropY ?? 0, cropW: s.cropW ?? 1, cropH: s.cropH ?? 1 }));
+  return (
+    <SetupCards
+      templateId={templateId}
+      sections={cards}
       pages={pages}
       widgets={widgets as SheetWidget[]}
       initialValues={initial}

@@ -2,7 +2,7 @@
 
 import { useState, useTransition, type CSSProperties } from "react";
 import { saveValue } from "@/app/cars/[carId]/setups/[setupId]/actions";
-import { valueKey, type SheetValues } from "@/lib/sheetValues";
+import { valueKey, cornersFor, displayValue, type SheetValues } from "@/lib/sheetValues";
 
 export type SheetWidget = {
   id: string;
@@ -20,6 +20,12 @@ export type SheetWidget = {
   align: number;
   fieldId: string | null;
   corner: "FL" | "FR" | "RL" | "RR" | null;
+  axle: string | null;
+  sectionId: string | null;
+  label: string | null;
+  unit: string | null;
+  choiceLabel: string | null;
+  sortOrder: number | null;
 };
 
 export type SheetPage = { pageIndex: number; width: number; height: number };
@@ -44,12 +50,7 @@ export function SheetView({
   const [locked, setLocked] = useState(false);
   const [pending, start] = useTransition();
 
-  function save(w: SheetWidget, value: string) {
-    if (!w.fieldId) return;
-    const key = valueKey(w.fieldId, w.corner);
-    setValues((v) => ({ ...v, [key]: value }));
-    start(() => saveValue(setupId, w.fieldId!, w.corner, value, path));
-  }
+  const save = useSaver(setupId, path, setValues, start);
 
   return (
     <div>
@@ -83,7 +84,7 @@ export function SheetView({
                     key={w.id}
                     w={w}
                     page={p}
-                    value={values[valueKey(w.fieldId!, w.corner)] ?? ""}
+                    value={displayValue(values, w)}
                     onSave={(v) => save(w, v)}
                   />
                 ))}
@@ -95,7 +96,28 @@ export function SheetView({
   );
 }
 
-function Box({ w, page, value, onSave }: { w: SheetWidget; page: SheetPage; value: string; onSave: (v: string) => void }) {
+/** Save a box's value to every corner it covers, updating local state first. */
+export function useSaver(
+  setupId: string,
+  path: string,
+  setValues: (fn: (v: SheetValues) => SheetValues) => void,
+  start: (fn: () => Promise<void>) => void
+) {
+  return (w: Pick<SheetWidget, "fieldId" | "corner" | "axle">, value: string) => {
+    if (!w.fieldId) return;
+    const corners = cornersFor(w);
+    setValues((v) => {
+      const next = { ...v };
+      for (const c of corners) next[valueKey(w.fieldId!, c)] = value;
+      return next;
+    });
+    start(async () => {
+      for (const c of corners) await saveValue(setupId, w.fieldId!, c, value, path);
+    });
+  };
+}
+
+export function Box({ w, page, value, onSave }: { w: SheetWidget; page: SheetPage; value: string; onSave: (v: string) => void }) {
   const [draft, setDraft] = useState(value);
   const [focused, setFocused] = useState(false);
   const heightPts = w.h * page.height;

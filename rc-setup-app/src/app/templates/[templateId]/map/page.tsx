@@ -18,6 +18,7 @@ type Box = {
   page_h: number;
   field_id: string | null;
   corner: string | null;
+  axle: string | null;
   field_label: string | null;
   field_tier: "main" | "detail" | null;
   is_sheet_field: boolean;
@@ -48,8 +49,8 @@ export default async function MapPage({
   const boxes = await rows<Box>(sql`
     SELECT DISTINCT ON (w.pdf_field)
            w.pdf_field, w.kind, w.page_index, w.x, w.y, w.w, w.h, p.width AS page_w, p.height AS page_h,
-           w.field_id, w.corner, f.label AS field_label, f.tier AS field_tier,
-           (s.key = 'sheet') AS is_sheet_field
+           w.field_id, w.corner, w.axle, f.label AS field_label, f.tier AS field_tier,
+           (s.key = 'sheet' OR s.source = 'ai') AS is_sheet_field
       FROM sheet_widgets w
       JOIN sheet_pages p ON p.template_id = w.template_id AND p.page_index = w.page_index
       LEFT JOIN template_fields f ON f.id = w.field_id
@@ -61,12 +62,16 @@ export default async function MapPage({
   const fields = await rows<{ id: string; label: string; unit: string | null; scope: string; section: string }>(sql`
     SELECT f.id, f.label, f.unit, f.scope, s.label AS section
       FROM template_fields f JOIN template_sections s ON s.id = f.section_id
-     WHERE s.template_id = ${templateId} AND s.key <> 'sheet' AND f.type <> 'computed'
+     WHERE s.template_id = ${templateId} AND s.key <> 'sheet' AND s.source IS DISTINCT FROM 'ai' AND f.type <> 'computed'
      ORDER BY s.sort_order, f.sort_order`);
 
   const choices: Choice[] = fields.flatMap((f) =>
     f.scope === "corner"
-      ? (["FL", "FR", "RL", "RR"] as const).map((c) => ({ value: `${f.id}|${c}`, label: `${f.section} · ${f.label} · ${c}` }))
+      ? [
+          { value: `${f.id}|axle:front`, label: `${f.section} · ${f.label} · front axle (FL+FR)` },
+          { value: `${f.id}|axle:rear`, label: `${f.section} · ${f.label} · rear axle (RL+RR)` },
+          ...(["FL", "FR", "RL", "RR"] as const).map((c) => ({ value: `${f.id}|${c}`, label: `${f.section} · ${f.label} · ${c}` })),
+        ]
       : [{ value: f.id, label: `${f.section} · ${f.label}${f.unit ? ` (${f.unit})` : ""}` }]
   );
 
@@ -102,7 +107,9 @@ export default async function MapPage({
               pageW: b.page_w,
               pageH: b.page_h,
             }}
-            current={b.is_sheet_field || !b.field_id ? "own" : b.corner ? `${b.field_id}|${b.corner}` : b.field_id}
+            current={
+              b.is_sheet_field || !b.field_id ? "own" : b.axle ? `${b.field_id}|axle:${b.axle}` : b.corner ? `${b.field_id}|${b.corner}` : b.field_id
+            }
             ownField={b.is_sheet_field && b.field_id ? { id: b.field_id, label: b.field_label ?? "", tier: b.field_tier ?? "detail" } : null}
             choices={choices}
           />

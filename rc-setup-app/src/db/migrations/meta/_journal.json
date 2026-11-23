@@ -15,6 +15,13 @@
       "when": 1795450611017,
       "tag": "0001_sheets_and_catalog",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795454969690,
+      "tag": "0002_ai_sections",
+      "breakpoints": true
     }
   ]
 }

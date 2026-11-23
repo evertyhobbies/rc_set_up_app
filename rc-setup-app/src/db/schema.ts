@@ -77,6 +77,14 @@ export const templateSections = pgTable("template_sections", {
   key: text("key").notNull(), // "transmission", "corner_weight"
   label: text("label").notNull(), // "Transmission"
   sortOrder: integer("sort_order").notNull().default(0),
+  // Set on sections the AI built from an imported sheet: "ai". The crop is the
+  // part of the sheet page (0..1 fractions) shown as this section's drawing.
+  source: text("source"),
+  cropPage: integer("crop_page"),
+  cropX: real("crop_x"),
+  cropY: real("crop_y"),
+  cropW: real("crop_w"),
+  cropH: real("crop_h"),
 });
 
 // A single field: what it's called, how it's entered, where it lives on
@@ -205,4 +213,13 @@ export const sheetWidgets = pgTable("sheet_widgets", {
   // Where this widget's value lives
   fieldId: uuid("field_id").references(() => templateFields.id, { onDelete: "set null" }),
   corner: cornerEnum("corner"),
+  // For a corner-scoped field: one box on the sheet that covers a whole axle
+  // ("front" → FL + FR, "rear" → RL + RR)
+  axle: text("axle"),
+  // Display info from the AI build: which section card it sits in, how it reads
+  sectionId: uuid("section_id").references(() => templateSections.id, { onDelete: "set null" }),
+  label: text("label"),
+  unit: text("unit"),
+  choiceLabel: text("choice_label"), // e.g. "4°" for one box of a caster picker
+  sortOrder: integer("sort_order"),
 });

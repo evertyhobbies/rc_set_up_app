@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { sql } from "drizzle-orm";
 import { rows, isUuid } from "@/lib/rows";
-import { PageHeader, btnGhost } from "@/components/PageHeader";
+import { PageHeader, btnGhost, btnPrimary } from "@/components/PageHeader";
 import { NewSetupForm, DeleteButton } from "@/components/CarActions";
 import { SheetImporter } from "@/components/SheetImporter";
 
@@ -91,7 +91,8 @@ export default async function CarPage({
               {car.sheet_field_count} sheet boxes · {car.field_count} summary fields
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <Link href={`/templates/${car.template_id}/ai?car=${car.id}`} className={btnPrimary}>Build setup with AI</Link>
             <Link href={`/templates/${car.template_id}/map?car=${car.id}`} className={btnGhost}>Link fields</Link>
             <Link href={`/cars/${car.id}?sheet=replace`} className={btnGhost}>Replace sheet</Link>
           </div>

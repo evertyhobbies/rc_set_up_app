@@ -65,7 +65,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tem
 
     // Keep links from a previous import (pdf field -> template field + corner)
     const previous = await db.select().from(sheetWidgets).where(eq(sheetWidgets.templateId, templateId));
-    const links = new Map(previous.filter((w) => w.fieldId).map((w) => [w.pdfField, { fieldId: w.fieldId!, corner: w.corner }]));
+    const links = new Map(previous.filter((w) => w.fieldId).map((w) => [w.pdfField, { fieldId: w.fieldId!, corner: w.corner, axle: w.axle }]));
+    // AI-built display info (card, label, unit…) per box, kept across re-imports
+    const display = new Map(
+      previous.map((w) => [
+        `${w.pdfField}|${w.exportValue ?? ""}`,
+        { sectionId: w.sectionId, label: w.label, unit: w.unit, choiceLabel: w.choiceLabel, sortOrder: w.sortOrder },
+      ])
+    );
 
     await db.delete(sheetWidgets).where(eq(sheetWidgets.templateId, templateId));
     await db.delete(sheetPages).where(eq(sheetPages.templateId, templateId));
@@ -95,12 +102,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tem
     for (const w of widgets) groups.set(w.field_name, [...(groups.get(w.field_name) ?? []), w]);
 
     let order = existingFields.filter((f) => f.sectionId === section.id).length;
-    const fieldFor = new Map<string, { fieldId: string; corner: "FL" | "FR" | "RL" | "RR" | null }>();
+    const fieldFor = new Map<string, { fieldId: string; corner: "FL" | "FR" | "RL" | "RR" | null; axle?: string | null }>();
 
     for (const [pdfField, ws] of groups) {
       const linked = links.get(pdfField);
       if (linked && existingFields.some((f) => f.id === linked.fieldId)) {
-        fieldFor.set(pdfField, { fieldId: linked.fieldId, corner: linked.corner });
+        fieldFor.set(pdfField, { fieldId: linked.fieldId, corner: linked.corner, axle: linked.axle });
         continue;
       }
       const first = ws[0];
@@ -161,6 +168,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tem
           align: w.align,
           fieldId: fieldFor.get(w.field_name)!.fieldId,
           corner: fieldFor.get(w.field_name)!.corner,
+          axle: fieldFor.get(w.field_name)!.axle ?? null,
+          ...(display.get(`${w.field_name}|${w.export_value ?? ""}`) ?? {}),
         }))
       );
     }
@@ -182,16 +191,20 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tem
         for (const [pdfField, value] of Object.entries(b.values as Record<string, string>)) {
           const target = fieldFor.get(pdfField);
           if (!target || value === "") continue;
-          const cornerCond = target.corner ? eq(setupValues.corner, target.corner) : isNull(setupValues.corner);
-          await db
-            .delete(setupValues)
-            .where(and(eq(setupValues.setupId, b.setupId), eq(setupValues.fieldId, target.fieldId), cornerCond));
-          await db.insert(setupValues).values({
-            setupId: b.setupId,
-            fieldId: target.fieldId,
-            corner: target.corner ?? undefined,
-            value: String(value),
-          });
+          const corners =
+            target.axle === "front" ? (["FL", "FR"] as const) : target.axle === "rear" ? (["RL", "RR"] as const) : [target.corner];
+          for (const corner of corners) {
+            const cornerCond = corner ? eq(setupValues.corner, corner) : isNull(setupValues.corner);
+            await db
+              .delete(setupValues)
+              .where(and(eq(setupValues.setupId, b.setupId), eq(setupValues.fieldId, target.fieldId), cornerCond));
+            await db.insert(setupValues).values({
+              setupId: b.setupId,
+              fieldId: target.fieldId,
+              corner: corner ?? undefined,
+              value: String(value),
+            });
+          }
           valuesSaved++;
         }
       }
