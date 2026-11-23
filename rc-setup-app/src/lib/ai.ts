@@ -24,19 +24,30 @@ function client() {
 
 type Img = { mime: "image/jpeg" | "image/png" | "image/webp"; b64: string };
 
-async function askWithTool<T>(opts: {
+/** Structured outputs require additionalProperties: false on every object. */
+function strict(schema: unknown): unknown {
+  if (Array.isArray(schema)) return schema.map(strict);
+  if (!schema || typeof schema !== "object") return schema;
+  const o: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(schema)) o[k] = strict(v);
+  const t = o.type;
+  if (t === "object" || (Array.isArray(t) && t.includes("object"))) o.additionalProperties = false;
+  return o;
+}
+
+/** One request whose answer is JSON matching `schema` (Messages API structured outputs). */
+async function askJson<T>(opts: {
   system: string;
   images: Img[];
   text: string;
-  tool: { name: string; description: string; input_schema: Record<string, unknown> };
+  schema: Record<string, unknown>;
   maxTokens: number;
 }): Promise<T> {
   const msg = await client().messages.create({
     model: AI_MODEL,
     max_tokens: opts.maxTokens,
     system: opts.system,
-    tools: [{ ...opts.tool, input_schema: opts.tool.input_schema as Anthropic.Tool.InputSchema }],
-    tool_choice: { type: "tool", name: opts.tool.name },
+    output_config: { format: { type: "json_schema", schema: strict(opts.schema) as Record<string, unknown> } },
     messages: [
       {
         role: "user",
@@ -50,10 +61,11 @@ async function askWithTool<T>(opts: {
       },
     ],
   });
-  const use = msg.content.find((c) => c.type === "tool_use");
-  if (!use || use.type !== "tool_use") throw new Error("The AI didn't return a result. Try again.");
-  if (msg.stop_reason === "max_tokens") throw new Error("The AI's answer was cut off. Try a smaller section.");
-  return use.input as T;
+  if (msg.stop_reason === "max_tokens") throw new Error("The AI's answer was cut off. Try again.");
+  if (msg.stop_reason === "refusal") throw new Error("The AI declined this request.");
+  const text = msg.content.find((c) => c.type === "text");
+  if (!text || text.type !== "text") throw new Error("The AI didn't return a result. Try again.");
+  return JSON.parse(text.text) as T;
 }
 
 const SYSTEM = `You help an RC racer digitize manufacturer setup sheets (touring cars, buggies, F1, etc.) into a setup app.
@@ -72,7 +84,7 @@ export async function aiLayout(input: {
 }): Promise<LayoutSection[]> {
   if (process.env.AI_MOCK) return mockLayout(input.pages.length);
   const boxList = input.boxes.map((b) => `${b.name}@p${b.page}(${b.cx.toFixed(3)},${b.cy.toFixed(3)})`).join(" ");
-  const res = await askWithTool<{ sections: LayoutSection[] }>({
+  const res = await askJson<{ sections: LayoutSection[] }>({
     system: SYSTEM,
     images: input.pages,
     maxTokens: 4000,
@@ -88,10 +100,7 @@ and all of its input boxes, without large overlaps with other sections.
 
 Every fillable input box must fall inside exactly one section. Box centers (name@page(x,y)):
 ${boxList}`,
-    tool: {
-      name: "sheet_layout",
-      description: "Report the sections of the setup sheet.",
-      input_schema: {
+    schema: {
         type: "object",
         properties: {
           sections: {
@@ -112,7 +121,6 @@ ${boxList}`,
           },
         },
         required: ["sections"],
-      },
     },
   });
   return res.sections;
@@ -159,7 +167,7 @@ export async function aiSection(input: {
     .join("\n");
   const existing = input.existing.map((f) => `${f.key}: "${f.label}"${f.unit ? ` (${f.unit})` : ""} scope=${f.scope}`).join("\n");
 
-  const res = await askWithTool<{ fields: AiField[] }>({
+  const res = await askJson<{ fields: AiField[] }>({
     system: SYSTEM,
     images: [input.image],
     maxTokens: 12000,
@@ -186,10 +194,7 @@ For every distinct box name, return:
   if it is for one wheel set corner (FL/FR/RL/RR). Otherwise both null. Do not link event info. If unsure, null.
 - choices: for checkbox/radio boxes, give the printed label of each on-value (e.g. "4°", "Carpet", "1.3 mm").
   Empty list for text boxes.`,
-    tool: {
-      name: "section_fields",
-      description: "Describe every box in this section.",
-      input_schema: {
+    schema: {
         type: "object",
         properties: {
           fields: {
@@ -225,7 +230,6 @@ For every distinct box name, return:
           },
         },
         required: ["fields"],
-      },
     },
   });
   return res.fields;
